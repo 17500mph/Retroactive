@@ -5,6 +5,33 @@
 
 import Cocoa
 
+extension ProcessInfo {
+    static var versionString: String {
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        let patchVersion = osVersion.patchVersion
+        var patchString = ""
+        if (patchVersion > 0) {
+            patchString = ".\(patchVersion)"
+        }
+        return "macOS \(osVersion.majorVersion).\(osVersion.minorVersion)\(patchString)"
+    }
+    
+    static var versionName: String {
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        let minorVersion = osVersion.minorVersion
+        if (minorVersion == 13) {
+            return "macOS High Sierra"
+        }
+        if (minorVersion == 14) {
+            return "macOS Mojave"
+        }
+        if (minorVersion == 15) {
+            return "macOS Catalina"
+        }
+        return ProcessInfo.versionString
+    }
+}
+
 extension NSView {
     func moveIntoView(_ newView: NSView) {
         let newRect = self.convert(self.bounds, to: newView)
@@ -66,7 +93,7 @@ class AccentGradientButton: HoverButton {
     }
     
     override func draw(_ dirtyRect: NSRect) {
-        var startingColor = NSColor.controlAccentColor
+        var startingColor = NSColor.controlAccentColorPolyfill
         startingColor = startingColor.blended(withFraction: blendingRatio, of: NSColor.controlBackgroundColor)!
         var endingColor = startingColor.blended(withFraction: blendingRatio, of: NSColor.black)!
         if (self.isHighlighted) {
@@ -83,7 +110,7 @@ class PillButton: NSButton {
     override func awakeFromNib() {
         super.awakeFromNib()
         self.wantsLayer = true
-        self.layer?.backgroundColor = NSColor.controlAccentColor.blended(withFraction: 0.25, of: NSColor.white)?.cgColor
+        self.layer?.backgroundColor = NSColor.controlAccentColorPolyfill.blended(withFraction: 0.25, of: NSColor.white)?.cgColor
         self.layer?.cornerRadius = 15.0
     }
     
@@ -98,7 +125,7 @@ class PillButton: NSButton {
     }
     
     override func viewDidChangeEffectiveAppearance() {
-        self.layer?.backgroundColor = NSColor.controlAccentColor.blended(withFraction: 0.25, of: NSColor.white)?.cgColor
+        self.layer?.backgroundColor = NSColor.controlAccentColorPolyfill.blended(withFraction: 0.25, of: NSColor.white)?.cgColor
     }
 }
 
@@ -133,12 +160,15 @@ extension NSButton {
         let newTitle = AppManager.replaceTokenFor(self.title)
         if (newTitle.contains(disclosureString)) {
             let attrString = NSMutableAttributedString(string: newTitle.replacingOccurrences(of: disclosureString, with: ""),
-                                                       attributes:[.font: NSFont.systemFont(ofSize: 19), .foregroundColor: NSColor.controlAccentColor])
+                                                       attributes:[.font: NSFont.systemFont(ofSize: 19), .foregroundColor: NSColor.controlAccentColorPolyfill])
             attrString.append(NSMutableAttributedString(string: disclosureString,
-                                                        attributes:[.font: NSFont.systemFont(ofSize: 25), .foregroundColor: NSColor.controlAccentColor, .baselineOffset: -1.5]))
+                                                        attributes:[.font: NSFont.systemFont(ofSize: 25), .foregroundColor: NSColor.controlAccentColorPolyfill, .baselineOffset: -1.5]))
             self.attributedTitle = attrString
         } else {
             self.title = newTitle
+            let attrString = NSMutableAttributedString(attributedString: self.attributedTitle)
+            attrString.addAttribute(.foregroundColor, value: NSColor.controlAccentColorPolyfill, range: NSRange(location: 0, length: attrString.length))
+            self.attributedTitle = attrString
         }
     }
 }
@@ -209,9 +239,20 @@ class PopButton : HoverButton {
     }
     
     override func draw(_ dirtyRect: NSRect) {
-        let bgColor = NSColor.controlAccentColor
+        let bgColor = NSColor.controlAccentColorPolyfill
         bgColor.setFill()
         dirtyRect.fill()
         super.draw(dirtyRect)
     }
 }
+
+extension NSStoryboard {
+    class var standard: NSStoryboard? {
+        if #available(OSX 10.13, *) {
+            return NSStoryboard.main
+        } else {
+            return NSStoryboard(name: "Main", bundle: nil)
+        }
+    }
+}
+

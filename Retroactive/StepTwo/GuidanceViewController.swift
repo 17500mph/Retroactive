@@ -18,14 +18,30 @@ class GuidanceViewController: NSViewController {
     @IBOutlet weak var timeMachineImageButton: HoverButton!
     
     static func instantiate() -> GuidanceViewController {
-        return NSStoryboard.main!.instantiateController(withIdentifier: "GuidanceViewController") as! GuidanceViewController
+        return NSStoryboard.standard!.instantiateController(withIdentifier: "GuidanceViewController") as! GuidanceViewController
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         let labels = [needInstallFirstTitle, downloadAppLabel, airDropAppLabel, timeMachineAppLabel]
         for label in labels {
             label!.updateToken()
+        }
+        let chosen = AppManager.shared.chosenApp
+        if (chosen == .keynote5) {
+            downloadAppLabel.stringValue = "Download and install iWork ’09 from The Internet Archive".localized()
+            airDropAppLabel.stringValue = "Download and install the iWork 9.3 Update".localized()
+            hideThirdLabel()
+        }
+        else if (chosen == .finalCutPro7) {
+            downloadAppLabel.stringValue = "Install Final Cut Pro 7 from DVD disc or DMG image".localized()
+            airDropAppLabel.stringValue = "Download and update to Final Cut Pro 7.0.3 (2010-02)".localized()
+            hideThirdLabel()
+        }
+        else if (chosen == .logicPro9) {
+            downloadAppLabel.stringValue = "Install Logic Pro 9 from DVD disc or DMG image".localized()
+            airDropAppLabel.stringValue = "Download and update to Logic Pro 9.1.8".localized()
+            hideThirdLabel()
         }
         alreadyInstalledButton.updateTitle()
         iconImageView.updateIcon()
@@ -37,16 +53,23 @@ class GuidanceViewController: NSViewController {
         timeMachineAppLabel.moveIntoView(timeMachineImageButton)
     }
     
+    func hideThirdLabel() {
+        timeMachineImageButton.removeFromSuperview()
+        downloadAppLabel.frame = CGRect(x: downloadAppLabel.frame.origin.x + 30, y: downloadAppLabel.frame.origin.y, width: downloadAppLabel.frame.width - 35, height: downloadAppLabel.frame.height)
+        airDropAppLabel.frame = CGRect(x: airDropAppLabel.frame.origin.x + 40, y: downloadAppLabel.frame.origin.y, width: downloadAppLabel.frame.width, height: downloadAppLabel.frame.height)
+        airDropAppImage.frame = CGRect(x: airDropAppImage.frame.origin.x, y: downloadAppImage.frame.origin.y, width: 403, height: 309)
+    }
+    
     @IBAction func appStoreClicked(_ sender: Any) {
-        AppFinder.openMacAppStore()
+        AppManager.shared.acquireSelectedApp()
     }
     
     @IBAction func airDropClicked(_ sender: Any) {
-        openKBArticle("203106")
+        AppManager.shared.updateSelectedApp()
     }
     
     @IBAction func timeMachineClicked(_ sender: Any) {
-        openKBArticle("209152")
+        AppDelegate.openKBArticle("209152")
     }
     
     @IBAction func alreadyInstalledClicked(_ sender: Any) {
@@ -58,8 +81,4 @@ class GuidanceViewController: NSViewController {
         AppFinder.shared.queryAllInstalledApps(shouldPresentAlert: true, claimsToHaveInstalled: false)
     }
     
-    func openKBArticle(_ identifier: String) {
-        let url = URL(string:"https://support.apple.com/en-us/HT\(identifier)")!
-        NSWorkspace.shared.open(url)
-    }
 }

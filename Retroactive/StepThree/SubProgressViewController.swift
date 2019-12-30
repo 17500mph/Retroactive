@@ -14,7 +14,7 @@ class SubProgressViewController: NSViewController {
     
     static func instantiate() -> SubProgressViewController
     {
-        return NSStoryboard.main!.instantiateController(withIdentifier: "SubProgressViewController") as! SubProgressViewController
+        return NSStoryboard.standard!.instantiateController(withIdentifier: "SubProgressViewController") as! SubProgressViewController
     }
 
     override func viewDidLoad() {
@@ -24,7 +24,8 @@ class SubProgressViewController: NSViewController {
         circularProgress.lineWidth = 4.0
         circularProgress.cancelProgress()
         circularProgress.isIndeterminate = true
-        self.progressTextField.stringValue = "Waiting..."
+        numberBox.fillColor = NSColor.controlAccentColorPolyfill
+        self.progressTextField.stringValue = "Waiting...".localized()
     }
     
     var stageDescription: String?
@@ -33,13 +34,13 @@ class SubProgressViewController: NSViewController {
         set {
             if (newValue == true) {
                 // circularProgress.resetProgress()
-                self.progressTextField.stringValue = "Working..."
+                self.progressTextField.stringValue = "Working...".localized()
                 circularProgress.isHidden = false
                 numberBox.isHidden = true
             } else {
                 circularProgress.progress = 1.0
                 circularProgress.color = NSColor.systemGreen
-                self.progressTextField.stringValue = "Completed"
+                self.progressTextField.stringValue = "Completed".localized()
             }
         }
         get {

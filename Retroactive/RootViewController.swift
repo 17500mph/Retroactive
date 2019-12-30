@@ -10,6 +10,7 @@ class RootViewController: NSViewController, CCNNavigationControllerDelegate, NSW
     @IBOutlet weak var titleLabel: NSTextField!
     @IBOutlet weak var titleStackView: NSStackView!
     @IBOutlet weak var updateButton: PillButton!
+    @IBOutlet weak var retroactiveLabel: NSTextField!
     
     var currentDocumentTitle: String {
         get {
@@ -17,7 +18,8 @@ class RootViewController: NSViewController, CCNNavigationControllerDelegate, NSW
         }
         set {
             titleLabel.stringValue = newValue
-            self.view.window?.title = "\(newValue) — Retroactive App"
+            retroactiveLabel.stringValue = newValue.count > 0 ? "— Retroactive".localized() : "Retroactive".localized()
+            self.view.window?.title = String(format: "%@ — Retroactive".localized(), newValue)
         }
     }
     
@@ -32,10 +34,10 @@ class RootViewController: NSViewController, CCNNavigationControllerDelegate, NSW
         self.view.addSubview(self.navigationController.view)
         
         NSLayoutConstraint.activate([
-            self.view.topAnchor.constraint(equalTo: self.navigationController.view.topAnchor),
-            self.view.leadingAnchor.constraint(equalTo: self.navigationController.view.leadingAnchor),
-            self.view.trailingAnchor.constraint(equalTo: self.navigationController.view.trailingAnchor),
-            self.view.bottomAnchor.constraint(equalTo: self.navigationController.view.bottomAnchor),
+            NSLayoutConstraint(item: self.view, attribute: .top, relatedBy: .equal, toItem: self.navigationController.view, attribute: .top, multiplier: 1, constant: 0),
+            NSLayoutConstraint(item: self.view, attribute: .leading, relatedBy: .equal, toItem: self.navigationController.view, attribute: .leading, multiplier: 1, constant: 0),
+            NSLayoutConstraint(item: self.view, attribute: .trailing, relatedBy: .equal, toItem: self.navigationController.view, attribute: .trailing, multiplier: 1, constant: 0),
+            NSLayoutConstraint(item: self.view, attribute: .bottom, relatedBy: .equal, toItem: self.navigationController.view, attribute: .bottom, multiplier: 1, constant: 0),
         ])
         
         titleStackView.wantsLayer = true
@@ -44,12 +46,11 @@ class RootViewController: NSViewController, CCNNavigationControllerDelegate, NSW
     func alertForOSIncompatibility() {
         let osVersion = ProcessInfo.processInfo.operatingSystemVersion
         if osVersion.minorVersion > 15 {
-            let patchVersion = osVersion.patchVersion
-            var patchString = ""
-            if (patchVersion > 0) {
-                patchString = ".\(patchVersion)"
-            }
-            AppDelegate.showOptionSheet(title: "Update to a newer version of Retroactive", text: "This version of Retroactive is only designed and tested for macOS Catalina, and may be incompatible with macOS \(osVersion.majorVersion).\(osVersion.minorVersion)\(patchString).", firstButtonText: "Check for Updates", secondButtonText: "Run Anyways", thirdButtonText: "Quit") { (response) in
+            AppDelegate.showOptionSheet(title: "Update to a newer version of Retroactive".localized(),
+                                        text: String(format: "This version of Retroactive is only designed and tested for macOS High Sierra, macOS Mojave, and macOS Catalina, which may be incompatible with %@.".localized(), ProcessInfo.versionString),
+                                        firstButtonText: "Check for Updates",
+                                        secondButtonText: "Run Anyways",
+                                        thirdButtonText: "Quit") { (response) in
                 if (response == .alertFirstButtonReturn) {
                     AppDelegate.current.checkForUpdates()
                     // NSApplication.shared.terminate(self)
@@ -67,6 +68,11 @@ class RootViewController: NSViewController, CCNNavigationControllerDelegate, NSW
     }
     
     @IBAction func previousClicked(_ sender: Any) {
+        if AppManager.shared.chosenApp == .proVideoUpdate {
+            self.navigationController.popToRootViewController(animated: true)
+            return
+        }
+        
         if let topVC = self.navigationController.topViewController {
             if topVC is CompletionViewController {
                 self.navigationController.popToRootViewController(animated: true)
@@ -75,12 +81,12 @@ class RootViewController: NSViewController, CCNNavigationControllerDelegate, NSW
         }
         
         if let previousVC = self.navigationController.previousViewController {
-            if previousVC is CompletionViewController {
+            if previousVC is CompletionViewController || previousVC is ProgressViewController {
                 self.navigationController.popToRootViewController(animated: true)
                 return
             }
         }
-        
+
         self.navigationController.popViewController(animated: true)
     }
     
